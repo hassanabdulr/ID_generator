@@ -158,7 +158,7 @@ def generate_predicts_hybrid_ids(old_subject_id):
     subject_id = f"{old_prefix}_{location}_{participant_num}"
 
     # Generate the XNAT ID by appending session and sequence
-    xnat_id = f"{subject_id}_02_SE01_MR"
+    xnat_id = f"{subject_id}_01_SE01_MR"
 
     return subject_id, xnat_id
 
