@@ -10,7 +10,6 @@ from ID_generator import (
     generate_slaight_ids,
     generate_new_healthy_control_ids,
 )
-
 # Title
 st.title("Participant ID Generator")
 
@@ -23,13 +22,29 @@ if protocol in ["SPINS", "PREDICTS", "Slaight", "Healthy-Control"]:
 else:
     location = None
 
+# Dynamic Placeholder Based on Protocol
+if protocol == "SPINS":
+    example_id = "SPN01_CMH_0008"
+elif protocol == "SPIN-ASD":
+    example_id = "SPN10_CMH_0008"
+elif protocol == "PREDICTS":
+    example_id = "SPN30_CMH_030089"
+elif protocol == "PREDICTS-HYBRID":
+    example_id = "SPN32_CMH_030092"
+elif protocol == "Slaight":
+    example_id = "SPN30_CMH_040001"
+elif protocol == "Healthy-Control":
+    example_id = "SPN30_CMH_050001"
+else:
+    example_id = ""
+
 # Step 3: Enter Old Subject ID
-old_subject_id = st.text_input("Enter Old Subject ID", placeholder="e.g., SPN01_CMH_0008")
+old_subject_id = st.text_input("Enter Old Subject ID", placeholder=f"e.g., {example_id}")
 
 # Step 4: Generate ID
 if st.button("Generate ID"):
     try:
-        if protocol == "SPIN-R":
+        if protocol == "SPINS":
             subject_id, xnat_id = generate_spins_r_ids(old_subject_id, location)
         elif protocol == "SPIN-ASD":
             subject_id, xnat_id = generate_spinasd_ids(old_subject_id)
