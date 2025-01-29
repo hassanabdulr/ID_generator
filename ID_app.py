@@ -108,3 +108,4 @@ if st.button("Generate ID"):
 if subject_id and xnat_id:
     if st.button("Save ID"):
         save_id(subject_id, xnat_id, protocol)
+
