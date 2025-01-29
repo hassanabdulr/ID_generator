@@ -1,70 +1,61 @@
 import streamlit as st
-from ID_generator import (
-    generate_spins_r_ids,
-    generate_spinasd_ids,
-    generate_predicts_ids,
-    generate_predicts_hybrid_ids,
-    generate_slaight_ids,
-    generate_new_healthy_control_ids,
-)
+import pandas as pd
+from supabase import create_client, Client
 
-# Title
-st.title("Participant ID Generator")
+# Supabase Credentials (Replace with your actual details)
+SUPABASE_URL = "https://efjosfuvszkardxaelrq.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmam9zZnV2c3prYXJkeGFlbHJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgxNTcxMzgsImV4cCI6MjA1MzczMzEzOH0.2d-F717q0eeWFN5LvQlT2sv7G4Z6l9lxKr7pApR_7Wo"
 
-# Helper Function to Get Example ID Format
-def get_example_id(protocol):
-    example_ids = {
-        "SPINS": "SPN01_CMH_0008",
-        "SPIN-ASD": "SPN10_CMH_0008",
-        "PREDICTS": "SPN30_CMH_030089",
-        "PREDICTS-HYBRID": "SPN32_CMH_030092",
-        "Slaight": "SPN30_CMH_040001",
-        "Healthy-Control": "SPN30_CMH_050001",
-    }
-    return example_ids.get(protocol, "")
+# Initialize Supabase client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Step 1: Select Protocol
-protocol = st.radio("Select Protocol", ["SPINS", "SPIN-ASD", "PREDICTS", "PREDICTS-HYBRID", "Slaight", "Healthy-Control"])
+# Function to Load ID Database from Supabase
+def load_id_database():
+    response = supabase.table("ids").select("*").execute()
+    return pd.DataFrame(response.data) if response.data else pd.DataFrame(columns=["subject_id", "xnat_id", "protocol"])
 
-# Step 2: Select Scanning Location (if applicable)
-location = None
-if protocol in ["SPINS", "PREDICTS", "Slaight", "Healthy-Control"]:
-    location = st.radio("Select Scanning Location", ["CAMH", "ToNI"])
+# Function to Check if an ID Exists
+def id_exists(subject_id, df):
+    return subject_id in df["subject_id"].values
 
-# Step 3: Enter Old Subject ID
-example_id = get_example_id(protocol)
-old_subject_id = st.text_input("Enter Old Subject ID", placeholder=f"e.g., {example_id}")
+# Function to Save New ID to Supabase
+def save_id(subject_id, xnat_id, protocol):
+    data = {"subject_id": subject_id, "xnat_id": xnat_id, "protocol": protocol}
+    supabase.table("ids").insert(data).execute()
+    st.success(f"✅ **{subject_id}** added successfully!")
 
-# Step 4: Generate ID
-if st.button("Generate ID"):
-    try:
-        # Validation: Ensure subject ID is entered
-        if not old_subject_id:
-            raise ValueError("Old Subject ID is required!")
+# Load ID Database
+df = load_id_database()
 
-        # Validation: Ensure location is selected where applicable
-        if protocol in ["SPINS", "PREDICTS", "Slaight", "Healthy-Control"] and not location:
-            raise ValueError("Scanning location must be selected!")
+# Streamlit UI
+st.title("Participant ID Manager (Supabase)")
 
-        # Generate ID based on selected protocol
-        if protocol == "SPINS":
-            subject_id, xnat_id = generate_spins_r_ids(old_subject_id, location)
-        elif protocol == "SPIN-ASD":
-            subject_id, xnat_id = generate_spinasd_ids(old_subject_id)
-        elif protocol == "PREDICTS":
-            subject_id, xnat_id = generate_predicts_ids(old_subject_id, location)
-        elif protocol == "PREDICTS-HYBRID":
-            subject_id, xnat_id = generate_predicts_hybrid_ids(old_subject_id)
-        elif protocol == "Slaight":
-            subject_id, xnat_id = generate_slaight_ids(old_subject_id, location)
-        elif protocol == "Healthy-Control":
-            subject_id, xnat_id = generate_new_healthy_control_ids(old_subject_id, location)
-        else:
-            raise ValueError("Invalid protocol selection.")
+# Search Section
+search_id = st.text_input("Search for an ID", placeholder="Enter Subject ID...")
+if st.button("Search"):
+    if id_exists(search_id, df):
+        result = df[df["subject_id"] == search_id]
+        st.success(f"✅ **Subject ID:** {result['subject_id'].values[0]}")
+        st.info(f"📌 **XNAT ID:** {result['xnat_id'].values[0]}")
+        st.warning(f"🧩 **Protocol:** {result['protocol'].values[0]}")
+    else:
+        st.error("❌ ID not found.")
 
-        # Display Results
-        st.success(f"**Subject ID:** {subject_id}")
-        st.success(f"**XNAT ID:** {xnat_id}")
+# Add New ID Section
+st.subheader("Generate & Save a New ID")
 
-    except ValueError as e:
-        st.error(f"Error: {e}")
+subject_id = st.text_input("Enter New Subject ID")
+xnat_id = st.text_input("Enter XNAT ID")
+protocol = st.selectbox("Select Protocol", ["SPINS", "SPIN-ASD", "PREDICTS", "PREDICTS-HYBRID", "Slaight", "Healthy-Control"])
+
+if st.button("Save New ID"):
+    if not subject_id or not xnat_id or not protocol:
+        st.error("⚠️ All fields are required!")
+    elif id_exists(subject_id, df):
+        st.warning(f"⚠️ ID **{subject_id}** already exists.")
+    else:
+        save_id(subject_id, xnat_id, protocol)
+
+# View Updated Database
+st.subheader("Complete ID Database")
+st.dataframe(load_id_database())  # Reload to reflect new entries
