@@ -1,4 +1,4 @@
-﻿altair==5.5.0
+altair==5.5.0
 attrs==24.3.0
 blinker==1.9.0
 cachetools==5.5.0
@@ -27,7 +27,7 @@ Pygments==2.19.1
 python-dateutil==2.9.0.post0
 pytz==2024.2
 referencing==0.36.1
-requests==2.32.3
+requests==2.25.1
 rich==13.9.4
 rpds-py==0.22.3
 six==1.17.0
@@ -40,4 +40,4 @@ typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.3.0
 watchdog==6.0.0
-supabase-py>=0.2.0
+supabase-py==0.0.2
