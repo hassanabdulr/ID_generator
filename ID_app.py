@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import supabase as supabase
 from supabase import create_client, Client
 
 # Supabase Credentials (Replace with your actual details)
